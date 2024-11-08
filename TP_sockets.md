@@ -54,11 +54,16 @@ void NetworkDiscovery::Update()
         // 1. Vérifier si l'écart de temps entre maintenant et la dernière déclaration de temps est supérieure ou égale à DeclareGameServerDelayMs
         // 2. Créer un paquet avec MagicPacket et _localServerName
         // 3. Envoyer le paquet en broadcast
-        if (nowMs >= DeclareGameServerDelayMs)
-        {
-            _lastDeclareGameServerDelayMs = true;
-        }
-    sf::Packet packet;
+		if (nowMs >= DeclareGameServerDelayMs)
+		{
+			_lastDeclareGameServerDelayMs = true;
+		}
+		else
+		{
+			_lastDeclareGameServerDelayMs = false;
+		}
+		sf::Packet(MagicPacket, _localServerName) packet;
+		socket.send(packet, sf::IpAddress::Broadcast, port) == sf::Socket::Done;
     }
 
     // Le reste du code est fourni...
@@ -78,7 +83,8 @@ bool NetworkGame::HostGame()
     // 2. Ajouter le listener au sélecteur
     // 3. Définir _isServer à true
 	sf::TcpListener listener;
-	uint16_t port = NetworkPort;
+	_listener = NetworkPort;
+	_selector.add(_listener);
 	_isServer = true;
     return true;
 }
@@ -95,6 +101,15 @@ bool NetworkGame::WaitingAnOpponent()
     // 2. Accepter la connexion
     // 3. Envoyer le nom du joueur local
     // 4. Configurer la connexion
+
+	if (listener.accept(*HostName) == sf::Socket::Done)
+	{
+		PlayerName.push_back(HostName);
+		std::cout << "Wait for connection..." << HostName->getRemoteAddress() << std::endl;
+	}
+	else {
+		delete HostName;
+	}
     return true;
 }
 ```
@@ -111,6 +126,7 @@ bool NetworkGame::SendMove(int row, int col)
     // 1. Créer un paquet avec MagicPacket et PacketType::Move
     // 2. Ajouter les coordonnées row et col
     // 3. Envoyer le paquet
+	sf::Packet(MagicPacket, _localServerName) packet;
     return true;
 }
 ```
