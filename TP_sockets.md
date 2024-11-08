@@ -54,16 +54,14 @@ void NetworkDiscovery::Update()
         // 1. Vérifier si l'écart de temps entre maintenant et la dernière déclaration de temps est supérieure ou égale à DeclareGameServerDelayMs
         // 2. Créer un paquet avec MagicPacket et _localServerName
         // 3. Envoyer le paquet en broadcast
-		if (nowMs >= DeclareGameServerDelayMs)
+		if (nowMs - _lastDeclareGameServerDelayMs >= DeclareGameServerDelayMs)
 		{
-			_lastDeclareGameServerDelayMs = true;
+			sf::Packet packet;
+			packet << MagicPacket << _localServerName;
+			_socket.send(packet, sf::IpAddress::Broadcast, NetworkPort);
+			_lastDeclareGameServerDelayMs = nowMs;
 		}
-		else
-		{
-			_lastDeclareGameServerDelayMs = false;
-		}
-		sf::Packet(MagicPacket, _localServerName) packet;
-		socket.send(packet, sf::IpAddress::Broadcast, port) == sf::Socket::Done;
+		return socket.send
     }
 
     // Le reste du code est fourni...
@@ -82,11 +80,15 @@ bool NetworkGame::HostGame()
     // 1. Configurer le listener TCP sur NetworkPort
     // 2. Ajouter le listener au sélecteur
     // 3. Définir _isServer à true
-	sf::TcpListener listener;
-	_listener = NetworkPort;
+	sf::Socket::Status status = _listener.listen(NetworkPort);
+	if (status != Socket::Done)
+	{
+		std::cerr << "Network Error on TCP Connection" << NetworkPort << std::endl;
+			return false;
+	}
 	_selector.add(_listener);
 	_isServer = true;
-    return true;
+	return true;
 }
 ```
 
