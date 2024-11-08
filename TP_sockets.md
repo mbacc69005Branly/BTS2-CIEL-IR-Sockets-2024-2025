@@ -22,7 +22,21 @@ bool NetworkDiscovery::Init()
     // 1. Essayer de lier le socket au port NetworkPort
     // 2. Si échec, essayer les ports suivants jusqu'à succès
     // 3. Ajouter le socket au sélecteur
-    return true;
+
+	uint16_t port = NetworkPort; //Récupérer le numéro du port
+	sf::Socket::Status status; //Varier le status du port
+
+	do {
+		status = _socket.bind(port);
+		port++;
+	} while (status != sf::Socket::Done || port <= 60000)
+
+	if (status == sf::Socket::Done)
+	{
+		return false;
+	}
+	_socketSelector.add(_socket);
+	return true;
 }
 ```
 
@@ -40,6 +54,11 @@ void NetworkDiscovery::Update()
         // 1. Vérifier si l'écart de temps entre maintenant et la dernière déclaration de temps est supérieure ou égale à DeclareGameServerDelayMs
         // 2. Créer un paquet avec MagicPacket et _localServerName
         // 3. Envoyer le paquet en broadcast
+        if (nowMs >= DeclareGameServerDelayMs)
+        {
+            _lastDeclareGameServerDelayMs = true;
+        }
+    sf::Packet packet;
     }
 
     // Le reste du code est fourni...
@@ -58,6 +77,9 @@ bool NetworkGame::HostGame()
     // 1. Configurer le listener TCP sur NetworkPort
     // 2. Ajouter le listener au sélecteur
     // 3. Définir _isServer à true
+	sf::TcpListener listener;
+	uint16_t port = NetworkPort;
+	_isServer = true;
     return true;
 }
 ```
